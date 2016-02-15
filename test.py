@@ -57,7 +57,7 @@ def check_results(results, vote_dict, cnt, round_num=0):
     winner = get_max(results, round_num)
     loser = get_min(results, round_num)
 
-    if results[winner][round_num] > cnt / 2.0:
+    if results[winner][0] > cnt / 2.0:
         print "Winner: " + winner
     else:
         print "No winner found yet, deleting " + loser
