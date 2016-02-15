@@ -32,7 +32,18 @@ def get_min(res, round_num):
 
     return loser
     
-def appropriate_votes():
+def appropriate_votes(results, loser, vote_dict, round_num, cnt):
+    delete = None
+    for name, votes in vote_dict.iteritems():
+        if name != "Votes":
+            if vote_dict[name][round_num] == loser:
+                print "Found at " + name
+                results[vote_dict[name][round_num + 1]][0] += 1
+                delete = name
+
+    if delete != None:
+        del vote_dict[delete]
+    """
     cnt = 0.0
     for name, votes in vote_dict.iteritems():
         if name != "options":
@@ -40,29 +51,22 @@ def appropriate_votes():
                 if val == str(round_num):
                     cnt += 1
                     results[vote_dict["options"][index]] += 1
-
-def check_results(results, vote_dict, round_num=0):
-    winner = get_max(results, round_num)
-    print "Winner: " + winner
-    cut = get_min(results, round_num)
-    print "Loser: " + cut
     """
-    winner = get_max(res)
-    cut = get_min(res)
-    
-    if res[winner] > cnt / 2.0:
+
+def check_results(results, vote_dict, cnt, round_num=0):
+    winner = get_max(results, round_num)
+    loser = get_min(results, round_num)
+
+    if results[winner][round_num] > cnt / 2.0:
         print "Winner: " + winner
     else:
-        # Delete lowest and reappropriate results
-        print "No Winner Yet!"
+        print "No winner found yet, deleting " + loser
+        print results
+        # Cut the loser and reappropriate their votes incriment round number
+        del results[loser]
+        appropriate_votes(results, loser, vote_dict, round_num, cnt)
         round_num += 1
-        del res[cut]
-        vote_dict['options'].remove(cut)
-        print vote_dict
-        appropriate_votes(res, round_num, vote_dict)
-    print winner
-    print res
-    """
+        check_results(results, vote_dict, cnt, round_num)
 
 def main():
     with open(sys.argv[1], mode='r') as infile:
@@ -83,26 +87,8 @@ def main():
             for index, val in enumerate(votes):
                 results[val][index] +=  1 
 
-    print results
-    check_results(results, vote_dict)
-
-    """
-    results = {}
-    for option in vote_dict["options"]:
-        results[option] = 0
-
-    round_num = 1
-    cnt = 0.0
-    for name, votes in vote_dict.iteritems():
-        if name != "options":
-            for index, val in enumerate(votes):
-                if val == '1':
-                    cnt += 1
-                    results[vote_dict["options"][index]] += 1
-
-    print results
-    check_results(results, cnt, round_num, vote_dict)
-    """
+    cnt = len(vote_dict)
+    check_results(results, vote_dict, cnt)
 
 if __name__ == "__main__":
     main()
