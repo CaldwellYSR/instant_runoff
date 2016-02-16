@@ -37,12 +37,13 @@ def appropriate_votes(results, loser, vote_dict, round_num, cnt):
     for name, votes in vote_dict.iteritems():
         if name != "Votes":
             if vote_dict[name][round_num] == loser:
-                print "Found at " + name
                 results[vote_dict[name][round_num + 1]][0] += 1
                 delete = name
 
     if delete != None:
         del vote_dict[delete]
+
+    check_results(results, vote_dict, cnt, round_num)
     """
     cnt = 0.0
     for name, votes in vote_dict.iteritems():
@@ -57,16 +58,13 @@ def check_results(results, vote_dict, cnt, round_num=0):
     winner = get_max(results, round_num)
     loser = get_min(results, round_num)
 
-    if results[winner][round_num] > cnt / 2.0:
+    if results[winner][0] > cnt / 2.0:
         print "Winner: " + winner
     else:
         print "No winner found yet, deleting " + loser
-        print results
         # Cut the loser and reappropriate their votes incriment round number
         del results[loser]
         appropriate_votes(results, loser, vote_dict, round_num, cnt)
-        round_num += 1
-        check_results(results, vote_dict, cnt, round_num)
 
 def main():
     with open(sys.argv[1], mode='r') as infile:
