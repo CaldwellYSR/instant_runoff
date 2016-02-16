@@ -2,91 +2,86 @@
 
 import csv, sys
 
-def get_max(res, round_num):
-    tmp = None
-    for option, votes in res.iteritems():
-        if tmp == None:
-            tmp = option
-            winner = option
-        else:
-            try:
-                if votes[round_num] > res[tmp][round_num]:
-                    winner = option
-            except KeyError:
-                pass
+class Instant_Runoff:
+    def __init__(self, f):
+        reader = csv.reader(f)
+        self.vote_dict = dict((rows[0],[rows[1], rows[2], rows[3], rows[4], rows[5]]) for rows in reader)
+        self.results = {}
+        for name, votes in self.vote_dict.iteritems():
+            if name != "Votes":
+                for index, val in enumerate(votes):
+                    try:
+                        self.results[val][index] =  0
+                    except KeyError:
+                        self.results[val] = {index: 0}
 
-    return winner
+        for name, votes in self.vote_dict.iteritems():
+            if name != "Votes":
+                for index, val in enumerate(votes):
+                    self.results[val][index] +=  1 
 
-def get_min(res, round_num):
-    tmp = None
-    for option, votes in res.iteritems():
-        if tmp == None:
-            tmp = option
-            loser = option
-        else:
-            try:
-                if votes[round_num] < res[tmp][round_num]:
-                    loser = option
-            except KeyError:
+        self.cnt = len(self.vote_dict)
+        self.check_results()
+ 
+
+    def get_max(self, round_num):
+        tmp = None
+        for option, votes in self.results.iteritems():
+            if tmp == None:
+                tmp = option
+                winner = option
+            else:
+                try:
+                    if votes[round_num] > self.results[tmp][round_num]:
+                        winner = option
+                except KeyError:
+                    pass
+
+        return winner
+
+    def get_min(self, round_num):
+        tmp = None
+        for option, votes in self.results.iteritems():
+            if tmp == None:
+                tmp = option
                 loser = option
+            else:
+                try:
+                    if votes[round_num] < self.results[tmp][round_num]:
+                        loser = option
+                except KeyError:
+                    loser = option
 
-    return loser
+        return loser
     
-def appropriate_votes(results, loser, vote_dict, round_num, cnt):
-    delete = None
-    for name, votes in vote_dict.iteritems():
-        if name != "Votes":
-            if vote_dict[name][round_num] == loser:
-                results[vote_dict[name][round_num + 1]][0] += 1
-                delete = name
+    def appropriate_votes(self, loser, round_num):
+        delete = None
+        for name, votes in self.vote_dict.iteritems():
+            if name != "Votes":
+                if self.vote_dict[name][round_num] == loser:
+                    self.results[self.vote_dict[name][1]][0] += 1
+                    delete = name
 
-    if delete != None:
-        del vote_dict[delete]
+        if delete != None:
+            del self.vote_dict[delete]
 
-    check_results(results, vote_dict, cnt, round_num)
-    """
-    cnt = 0.0
-    for name, votes in vote_dict.iteritems():
-        if name != "options":
-            for index, val in enumerate(votes):
-                if val == str(round_num):
-                    cnt += 1
-                    results[vote_dict["options"][index]] += 1
-    """
+        self.check_results(round_num)
+    
+    def check_results(self, round_num=0):
+        winner = self.get_max(round_num)
+        loser = self.get_min(round_num)
 
-def check_results(results, vote_dict, cnt, round_num=0):
-    winner = get_max(results, round_num)
-    loser = get_min(results, round_num)
-
-    if results[winner][0] > cnt / 2.0:
-        print "Winner: " + winner
-    else:
-        print "No winner found yet, deleting " + loser
-        # Cut the loser and reappropriate their votes incriment round number
-        del results[loser]
-        appropriate_votes(results, loser, vote_dict, round_num, cnt)
+        if self.results[winner][0] > self.cnt / 2.0:
+            print "Winner: " + winner
+        else:
+            print "No winner found yet, deleting " + loser
+            del self.results[loser]
+            self.appropriate_votes(loser, round_num)
 
 def main():
     with open(sys.argv[1], mode='r') as infile:
-        reader = csv.reader(infile)
-        vote_dict = dict((rows[0],[rows[1], rows[2], rows[3], rows[4], rows[5]]) for rows in reader)
-
-    results = {}
-    for name, votes in vote_dict.iteritems():
-        if name != "Votes":
-            for index, val in enumerate(votes):
-                try:
-                    results[val][index] =  0
-                except KeyError:
-                    results[val] = {index: 0}
-
-    for name, votes in vote_dict.iteritems():
-        if name != "Votes":
-            for index, val in enumerate(votes):
-                results[val][index] +=  1 
-
-    cnt = len(vote_dict)
-    check_results(results, vote_dict, cnt)
-
+        ir = Instant_Runoff(infile)
+ 
+    
 if __name__ == "__main__":
     main()
